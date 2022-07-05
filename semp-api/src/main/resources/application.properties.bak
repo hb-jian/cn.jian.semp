@@ -1,0 +1,53 @@
+spring.profiles.active=dev,@common@
+
+#### Jwt配置 ####
+#请求头
+jwt.header.key = Authorization
+#jwt认证类型
+jwt.authType = Bearer
+#jwt密钥
+jwt.secret = @jwt.2021
+#accessToken有效期，单位：秒
+jwt.accessToken.expiration = 7200
+#accessToken有效期，单位：秒
+jwt.refreshToken.expiration = 108000
+#token刷新最小时间间隔，单位：秒
+jwt.token.refresh.interval = 5
+
+#### 业务配置 ####
+#获取验证码数量限制
+business.login.captcha.count.limit = 5
+#获取验证码时间限制
+business.login.captcha.interval.limit = 3
+#登录验证码有效期，单位：秒
+business.login.captcha.expiration = 180
+
+# JPA
+spring.jpa.database=MYSQL
+spring.jpa.show-sql=true
+# Hibernate ddl auto (create, create-drop, update)
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL55Dialect
+
+#密码加盐
+system.user.password.salt=Passw0rd@2021
+
+# Json配置
+#JSON序列化忽略空值
+spring.jackson.serialization.write-null-map-values=false
+spring.jackson.default-property-inclusion=non_null
+#允许字段名不用引号
+spring.jackson.parser.allow-unquoted-field-names=true
+#允许使用单引号
+spring.jackson.parser.allow-single-quotes=true
+#允许数字含有前导0
+spring.jackson.parser.allow-numeric-leading-zeros=true
+spring.jackson.parser.strict-duplicate-detection=true
+#允许未知的属性
+spring.jackson.deserialization.fail-on-unknown-properties=false
+spring.jackson.serialization.fail-on-empty-beans=false
+#json序列化时间时返回指定格式字符串
+spring.jackson.date-format=yyyy-MM-dd HH:mm:ss
+spring.jackson.time-zone=GMT+8
+#解决springboot2.6.x问题，#bug：Failed to start bean 'documentationPluginsBootstrapper'
+#spring.mvc.pathmatch.matching-strategy=ant_path_matcher

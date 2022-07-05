@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+scan: 设置为true,代表会在指定的时间内重新加载日志配置文件
+scanPeriod:
+	当scan=true时，日志配置文件会在指定的单位时间内重新加载，默认是每分钟会重载一次。
+scanPeriod的配置说明:
+时间单位：milliseconds, seconds, minutes , hours
+-->
+<configuration  scan="true" scanPeriod="3 minutes">
+    <contextName>logback-test</contextName>
+
+    <!--  控制台输出  -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} >>> %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--  日志文件配置  -->
+    <appender name="LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${catalina.base}/log/semp.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${catalina.base}/logback/semp.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-4relative [%thread] %-5level %logger{35}- %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- org.springframework包下的类只打印warn级别上日志 -->
+    <logger name="org.springframework" level="warn"/>
+
+    <!-- spring配置文件值：spring.profiles.active=dev -->
+<!--    <springProfile name="dev">-->
+<!--        <root level="INFO">-->
+<!--            <appender-ref ref="STDOUT"/>-->
+<!--            <appender-ref ref="LOG_FILE"/>-->
+<!--        </root>-->
+<!--    </springProfile>-->
+<!--    <springProfile name="test">-->
+<!--        <root level="INFO">-->
+<!--            <appender-ref ref="LOG_FILE"/>-->
+<!--        </root>-->
+<!--    </springProfile>-->
+<!--    <springProfile name="pro">-->
+<!--        <root level="INFO">-->
+<!--            <appender-ref ref="LOG_FILE"/>-->
+<!--        </root>-->
+<!--    </springProfile>-->
+            <root level="INFO">
+                <appender-ref ref="STDOUT"/>
+                <appender-ref ref="LOG_FILE"/>
+            </root>
+    <logger name="com.hqyz" level="DEBUG" additivity="false">
+        <appender-ref ref="LOG_FILE"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+</configuration>
