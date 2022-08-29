@@ -104,7 +104,7 @@ public class DeviceController {
             pageSize = 10;
 
         //非管理员用户，仅允许查询当前所属机构下数据
-        if (!SecurityUtils.isAdmin(SecurityUtils.getUserId())) {
+        if (!SecurityUtils.getLoginUser().isSystem()) {
             orgId = SecurityUtils.getOrgId();
         }
 

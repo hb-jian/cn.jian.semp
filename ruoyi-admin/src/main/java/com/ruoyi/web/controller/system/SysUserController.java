@@ -56,6 +56,13 @@ public class SysUserController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(SysUser user)
     {
+        //@2022.08.26 modify by wj，根据当前用户登录信息，填充所属机构，增加机构数据过滤功能
+        if(!SecurityUtils.getLoginUser().isSystem()){
+            if(user != null && StringUtils.isBlank(user.getOrgId())){
+                user.setOrgId(SecurityUtils.getOrgId());
+            }
+        }
+
         startPage();
         List<SysUser> list = userService.selectUserList(user);
         return getDataTable(list);
@@ -66,6 +73,13 @@ public class SysUserController extends BaseController
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysUser user)
     {
+        //@2022.08.26 modify by wj，根据当前用户登录信息，填充所属机构，增加机构数据过滤功能
+        if(!SecurityUtils.getLoginUser().isSystem()){
+            if(user != null && StringUtils.isBlank(user.getOrgId())){
+                user.setOrgId(SecurityUtils.getOrgId());
+            }
+        }
+
         List<SysUser> list = userService.selectUserList(user);
         ExcelUtil<SysUser> util = new ExcelUtil<SysUser>(SysUser.class);
         util.exportExcel(response, list, "用户数据");

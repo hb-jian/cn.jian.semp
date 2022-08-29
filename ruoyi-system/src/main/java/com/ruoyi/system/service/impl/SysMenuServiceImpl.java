@@ -110,7 +110,7 @@ public class SysMenuServiceImpl implements ISysMenuService
     public List<SysMenu> selectMenuTreeByUserId(Long userId)
     {
         List<SysMenu> menus = null;
-        if (SecurityUtils.isAdmin(userId))
+        if (SecurityUtils.getLoginUser().isSystem())
         {
             menus = menuMapper.selectMenuTreeAll();
         }

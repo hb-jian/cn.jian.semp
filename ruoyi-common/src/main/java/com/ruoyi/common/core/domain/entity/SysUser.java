@@ -3,6 +3,8 @@ package com.ruoyi.common.core.domain.entity;
 import java.util.Date;
 import java.util.List;
 import javax.validation.constraints.*;
+
+import com.ruoyi.common.enums.UserType;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -36,6 +38,10 @@ public class SysUser extends BaseEntity
     /** 用户昵称 */
     @Excel(name = "用户名称")
     private String nickName;
+
+    /** 用户类型 00系统用户 10企业管理员 11企业用户 */
+    @Excel(name = "用户类型")
+    private String userType;
 
     /** 用户邮箱 */
     @Excel(name = "用户邮箱")
@@ -155,6 +161,15 @@ public class SysUser extends BaseEntity
     public void setUserName(String userName)
     {
         this.userName = userName;
+    }
+
+    public String getUserType() {
+        return this.userType;
+    }
+
+    public void setUserType(String userType)
+    {
+        this.userType = userType;
     }
 
     @Email(message = "邮箱格式不正确")

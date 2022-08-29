@@ -2,6 +2,8 @@ package com.ruoyi.common.core.domain.model;
 
 import java.util.Collection;
 import java.util.Set;
+
+import com.ruoyi.common.enums.UserType;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.alibaba.fastjson2.annotation.JSONField;
@@ -180,6 +182,27 @@ public class LoginUser implements UserDetails
     {
         return true;
     }
+
+    /**
+     * 是否为系统用户
+     *
+     * @return 结果
+     */
+    public boolean isSystem()
+    {
+        return user.getUserType().equals(UserType.System.getCode());
+    }
+
+    /**
+     * 是否为企业管理员
+     *
+     * @return 结果
+     */
+    public boolean isEntAdmin()
+    {
+        return user.getUserType().equals(UserType.EntAdmin.getCode());
+    }
+
 
     public Long getLoginTime()
     {

@@ -112,7 +112,7 @@ public class ProjectController extends BaseController {
             pageSize = 10;
 
         String orgId = SecurityUtils.getOrgId();
-        if(SecurityUtils.isAdmin(SecurityUtils.getUserId())){
+        if(SecurityUtils.getLoginUser().isSystem()){
             orgId = null;
         }
 

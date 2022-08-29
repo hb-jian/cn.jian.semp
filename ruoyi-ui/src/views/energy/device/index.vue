@@ -114,13 +114,13 @@
 
         <el-table v-loading="loading" :data="devList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column
+          <!-- <el-table-column
             label="设备编号"
             align="center"
             key="id"
             prop="id"
             v-if="columns[0].visible"
-          />
+          /> -->
           <el-table-column
             label="设备名称"
             align="center"
@@ -132,16 +132,17 @@
           <!-- <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
           <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns[3].visible" :show-overflow-tooltip="true" />
           <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[4].visible" width="120" />-->
-          <el-table-column label="状态" align="center" key="status" v-if="columns[5].visible">
+          <el-table-column label="所属项目" align="center" prop="proId" v-if="columns[2].visible" />
+          <el-table-column label="运行状态" align="center" key="status" v-if="columns[3].visible">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.e_device_status" :value="scope.row.status" />
             </template>
           </el-table-column>
           <el-table-column
-            label="创建时间"
+            label="登记时间"
             align="center"
             prop="createTime"
-            v-if="columns[6].visible"
+            v-if="columns[4].visible"
             width="160"
           >
             <template slot-scope="scope">
@@ -154,7 +155,7 @@
             width="160"
             class-name="small-padding fixed-width"
           >
-            <template slot-scope="scope" v-if="scope.row.userId !== 1">
+            <template slot-scope="scope">
               <el-button
                 size="mini"
                 type="text"
@@ -186,52 +187,24 @@
     <!-- 添加或修改设备对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="设备编号" prop="devId">
-              <el-input v-model="form.devId" placeholder="请输入设备编号" maxlength="30" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="归属项目" prop="proId">
+            <el-form-item label="所属项目" prop="proId">
               <treeselect
-                v-model="form.proId"
+                v-model="form.projectId"
                 :options="projectTree"
                 :show-count="true"
+                :disable-branch-nodes="true"                
                 placeholder="请选择项目"
               />
             </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="设备名称" prop="devName">
-              <el-input v-model="form.devName" placeholder="请输入设备名称" maxlength="30" />
+            <!-- <el-form-item label="设备编号" prop="devId">
+              <el-input v-model="form.devId" placeholder="请输入设备编号" maxlength="30" />
+            </el-form-item> -->
+            <el-form-item label="设备名称" prop="name">
+              <el-input v-model="form.name" placeholder="请输入设备名称" maxlength="30" />
             </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="状态">
-              <el-select v-model="queryParams.status" placeholder="设备状态" clearable>
-                <el-option
-                  v-for="dict in dict.type.e_device_status"
-                  :key="dict.value"
-                  :label="dict.label"
-                  :value="dict.value"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="24">
             <el-form-item label="备注">
               <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
             </el-form-item>
-          </el-col>
-        </el-row>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -283,7 +256,7 @@ export default {
       // 弹出层标题
       title: "",
       // 项目数据树
-      projectTree: [],
+      projectTree: [],      
       // 定时器
       statusTimer: null,
       // 是否显示弹出层
@@ -293,39 +266,40 @@ export default {
       // 表单参数
       form: {},
       defaultProps: {
-        children: "projects",
-        label: "name"
+        children: "children",
+        label: "label"
       },
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        devName: undefined,
+        //name: undefined,
         proId: undefined,
         status: undefined
       },
       // 列信息
       columns: [
-        { key: 0, label: `设备编号`, visible: true },
+        { key: 0, label: `设备编号`, visible: false },
         { key: 1, label: `设备名称`, visible: true },
-        { key: 2, label: `a`, visible: true },
-        { key: 3, label: `b`, visible: true },
-        { key: 4, label: `c`, visible: true },
-        { key: 5, label: `状态`, visible: true },
-        { key: 6, label: `创建时间`, visible: true }
+        { key: 2, label: `所属项目`, visible: true },
+        { key: 3, label: `运行状态`, visible: true },
+        { key: 4, label: `登记时间`, visible: true }
       ],
       // 表单校验
       rules: {
-        devId: [
-          { required: true, message: "设备编号不能为空", trigger: "blur" },
-          {
-            min: 2,
-            max: 20,
-            message: "设备编号长度必须介于 2 和 20 之间",
-            trigger: "blur"
-          }
+        // devId: [
+        //   { required: true, message: "设备编号不能为空", trigger: "blur" },
+        //   {
+        //     min: 2,
+        //     max: 20,
+        //     message: "设备编号长度必须介于 2 和 20 之间",
+        //     trigger: "blur"
+        //   }
+        // ],
+        proId: [
+          { required: true, message: "所属项目不能为空", trigger: "blur" }
         ],
-        devName: [
+        name: [
           { required: true, message: "设备名称不能为空", trigger: "blur" }
         ]
       }
@@ -359,7 +333,7 @@ export default {
           this.total = response.total;
           this.loading = false;
 
-          //刷新状态          
+          //刷新状态
           this.refreshStatus();
         }
       );
@@ -381,25 +355,29 @@ export default {
           //构建项目树
           orgs.forEach(org => {
             let orgNode = {
-              orgId: org.orgId,
-              name: org.name,
-              projects: []
+              id: org.orgId,
+              label: org.name,               
+              type: "org",
+              children: []
             };
 
             pros.forEach(pro => {
               if (pro.orgId == org.orgId) {
                 let proNode = {
-                  proId: pro.id,
-                  name: pro.name
+                  id: pro.id,
+                  label: pro.name,                  
+                  orgId: org.orgId,  
+                  type: "pro"
                 };
 
-                orgNode.projects.push(proNode);
+                orgNode.children.push(proNode);                
               }
             });
 
-            if(orgNode.projects.length>0){
-                this.projectTree.push(orgNode);
-            }            
+            if (orgNode.children.length > 0) {
+              console.log(orgNode)
+              this.projectTree.push(orgNode);              
+            }
           });
         });
       });
@@ -407,12 +385,17 @@ export default {
     // 筛选节点
     filterNode(value, data) {
       if (!value) return true;
-      return data.name.indexOf(value) !== -1;
+      return data.lable.indexOf(value) !== -1;
     },
     // 节点单击事件
     handleNodeClick(data) {
-      this.queryParams.proId = data.proId;
-      this.queryParams.orgId = data.orgId;
+      if(data.type == "org"){
+        this.queryParams.proId = undefined;
+        this.queryParams.orgId = data.id;
+      }else if(data.type == "pro"){
+        this.queryParams.proId = data.id;
+        this.queryParams.orgId = data.orgId;
+      }      
       this.handleQuery();
     },
     // 取消按钮
@@ -452,19 +435,12 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset();
-      this.getTreeselect();
-      getUser().then(response => {
-        this.postOptions = response.posts;
-        this.roleOptions = response.roles;
-        this.open = true;
-        this.title = "添加设备";
-      });
+      this.open = true;
+      this.title = "添加项目";
     },
     /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset();
-      this.getTreeselect();
-      const userId = row.userId || this.ids;
+    handleUpdate(row) {      
+      const devId = row.id || this.ids;
       getDev(devId).then(response => {
         this.form = response.data;
         this.open = true;
@@ -475,14 +451,14 @@ export default {
     submitForm: function() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.userId != undefined) {
-            updateUser(this.form).then(response => {
+          if (this.form.devId != undefined) {
+            updateDev(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
-            addUser(this.form).then(response => {
+            addDev(this.form).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();
@@ -517,8 +493,8 @@ export default {
     },
     /** 刷新列表状态 */
     refreshStatus() {
-      let tmpIds = this.devIds;      
-      if (tmpIds && tmpIds.length>0) {
+      let tmpIds = this.devIds;
+      if (tmpIds && tmpIds.length > 0) {
         statusDev(tmpIds).then(res => {
           res.data.forEach(s => {
             this.devList.forEach(d => {

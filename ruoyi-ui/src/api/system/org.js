@@ -29,7 +29,7 @@ export function addOrg(data) {
 // 修改机构
 export function updateOrg(data) {
   return request({
-    url: '/system/org',
+    url: '/system/org/update',
     method: 'post',
     data: data
   })

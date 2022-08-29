@@ -59,6 +59,9 @@ public class SysRole extends BaseEntity
     /** 部门组（数据权限） */
     private Long[] deptIds;
 
+    /** 所属机构 */
+    private String orgId;
+
     public SysRole()
     {
 
@@ -203,7 +206,12 @@ public class SysRole extends BaseEntity
     {
         this.deptIds = deptIds;
     }
-    
+
+    public String getOrgId(){return orgId;}
+
+    public void setOrgId(String orgId){
+        this.orgId = orgId;
+    }
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)

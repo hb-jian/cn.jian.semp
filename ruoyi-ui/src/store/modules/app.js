@@ -2,7 +2,8 @@ import Cookies from 'js-cookie'
 
 const state = {
   sidebar: {
-    opened: Cookies.get('sidebarStatus') ? !!+Cookies.get('sidebarStatus') : true,
+    //默认点击菜单后展开侧边栏
+    opened: true,//Cookies.get('sidebarStatus') ? !!+Cookies.get('sidebarStatus') : true,
     withoutAnimation: false,
     hide: false
   },
@@ -11,7 +12,7 @@ const state = {
 }
 
 const mutations = {
-  TOGGLE_SIDEBAR: state => {
+  TOGGLE_SIDEBAR: state => {    
     if (state.sidebar.hide) {
       return false;
     }
@@ -21,7 +22,7 @@ const mutations = {
       Cookies.set('sidebarStatus', 1)
     } else {
       Cookies.set('sidebarStatus', 0)
-    }
+    }    
   },
   CLOSE_SIDEBAR: (state, withoutAnimation) => {
     Cookies.set('sidebarStatus', 0)

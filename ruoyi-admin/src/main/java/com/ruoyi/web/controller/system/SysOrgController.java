@@ -4,6 +4,8 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysOrg;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.service.ISysOrgService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -11,6 +13,8 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -89,8 +93,20 @@ public class SysOrgController extends BaseController {
 //        if(pageSize == null || pageSize <=0 || pageSize>1000)
 //            pageSize = 10;
     public TableDataInfo list(){
-        startPage();
-        List<SysOrg> orgList = orgService.list();
+        String userOrgId = null;
+        //@2022.08.26 modify by wj，根据当前用户登录信息，填充所属机构，增加机构数据过滤功能
+        if(!SecurityUtils.getLoginUser().isSystem() && StringUtils.isBlank(SecurityUtils.getOrgId())){
+            userOrgId = SecurityUtils.getOrgId();
+        }
+
+        List<SysOrg> orgList = new ArrayList<>();
+        if(StringUtils.isBlank(userOrgId)){
+            startPage();
+            orgList = orgService.list();
+        }else{
+            SysOrg userOrg = orgService.get(userOrgId);
+            orgList.add(userOrg);
+        }
 
         return getDataTable(orgList);
     }

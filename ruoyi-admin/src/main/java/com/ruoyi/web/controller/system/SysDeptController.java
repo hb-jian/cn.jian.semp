@@ -2,6 +2,9 @@ package com.ruoyi.web.controller.system;
 
 import java.util.Iterator;
 import java.util.List;
+
+import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.utils.SecurityUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,6 +45,13 @@ public class SysDeptController extends BaseController
     @GetMapping("/list")
     public AjaxResult list(SysDept dept)
     {
+        //@2022.08.26 modify by wj，根据当前用户登录信息，填充所属机构，增加机构数据过滤功能
+        if(!SecurityUtils.getLoginUser().isSystem()){
+            if(dept != null && StringUtils.isBlank(dept.getOrgId())){
+                dept.setOrgId(SecurityUtils.getOrgId());
+            }
+        }
+
         List<SysDept> depts = deptService.selectDeptList(dept);
         return AjaxResult.success(depts);
     }
@@ -84,6 +94,12 @@ public class SysDeptController extends BaseController
     @GetMapping("/treeselect")
     public AjaxResult treeselect(SysDept dept)
     {
+        //@2022.08.26 modify by wj，根据当前用户登录信息，填充所属机构，增加机构数据过滤功能
+        if(!SecurityUtils.getLoginUser().isSystem()){
+            if(dept != null && StringUtils.isBlank(dept.getOrgId())){
+                dept.setOrgId(SecurityUtils.getOrgId());
+            }
+        }
         List<SysDept> depts = deptService.selectDeptList(dept);
         return AjaxResult.success(deptService.buildDeptTreeSelect(depts));
     }

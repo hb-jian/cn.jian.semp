@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <h3 class="title">若依后台管理系统</h3>
+      <h3 class="title">用户登录</h3>
       <el-form-item prop="username">
         <el-input
           v-model="loginForm.username"
@@ -56,7 +56,7 @@
     </el-form>
     <!--  底部  -->
     <div class="el-login-footer">
-      <span>Copyright © 2018-2022 ruoyi.vip All Rights Reserved.</span>
+      <span>{{this.copyRight}}</span>
     </div>
   </div>
 </template>
@@ -92,7 +92,10 @@ export default {
       captchaOnOff: true,
       // 注册开关
       register: false,
-      redirect: undefined
+      redirect: undefined,
+      //copyRight: process.env.CopyRight
+      //copyRight: 'Copyright © 2018-2022 BJFZ All Rights Reserved.'
+      copyRight: 'Copyright © 2022-2025 BJFZ All Rights Reserved.'
     };
   },
   watch: {
@@ -107,7 +110,7 @@ export default {
     this.getCode();
     this.getCookie();
   },
-  methods: {
+  methods: {    
     getCode() {
       getCodeImg().then(res => {
         this.captchaOnOff = res.captchaOnOff === undefined ? true : res.captchaOnOff;
@@ -161,7 +164,7 @@ export default {
   justify-content: center;
   align-items: center;
   height: 100%;
-  background-image: url("../assets/images/login-background.jpg");
+  background-image: url("../assets/images/login-background-default.png");
   background-size: cover;
 }
 .title {
@@ -171,6 +174,11 @@ export default {
 }
 
 .login-form {
+  position: absolute;
+  left: 75%;
+  top: 50%;
+  margin: -190px 0 0 -175px;
+
   border-radius: 6px;
   background: #ffffff;
   width: 400px;
@@ -208,7 +216,7 @@ export default {
   bottom: 0;
   width: 100%;
   text-align: center;
-  color: #fff;
+  color:#000000;
   font-family: Arial;
   font-size: 12px;
   letter-spacing: 1px;

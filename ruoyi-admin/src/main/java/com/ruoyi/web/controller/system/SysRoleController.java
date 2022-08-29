@@ -1,7 +1,10 @@
 package com.ruoyi.web.controller.system;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+
+import com.ruoyi.common.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -55,6 +58,17 @@ public class SysRoleController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(SysRole role)
     {
+        //@2022.08.29 modify by wj，非管理员用户，不提供角色管理功能
+        if(!SecurityUtils.getLoginUser().isSystem() && !SecurityUtils.getLoginUser().isEntAdmin())
+            return getDataTable(new ArrayList<SysRole>());
+
+        //@2022.08.26 modify by wj，根据当前用户登录信息，填充所属机构，增加机构数据过滤功能
+        if(!SecurityUtils.getLoginUser().isSystem()){
+            if(role != null && StringUtils.isBlank(role.getOrgId())){
+                role.setOrgId(SecurityUtils.getOrgId());
+            }
+        }
+
         startPage();
         List<SysRole> list = roleService.selectRoleList(role);
         return getDataTable(list);
@@ -65,6 +79,13 @@ public class SysRoleController extends BaseController
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysRole role)
     {
+        //@2022.08.26 modify by wj，根据当前用户登录信息，填充所属机构，增加机构数据过滤功能
+        if(!SecurityUtils.getLoginUser().isSystem()){
+            if(role != null && StringUtils.isBlank(role.getOrgId())){
+                role.setOrgId(SecurityUtils.getOrgId());
+            }
+        }
+
         List<SysRole> list = roleService.selectRoleList(role);
         ExcelUtil<SysRole> util = new ExcelUtil<SysRole>(SysRole.class);
         util.exportExcel(response, list, "角色数据");
