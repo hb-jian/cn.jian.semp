@@ -36,9 +36,10 @@ export function updateOrg(data) {
 }
 
 // 删除机构
-export function delOrg(orgId) {
+export function delOrg(id) {
   return request({
-    url: '/system/org/' + orgId,
-    method: 'post'
+    url: '/system/org/delete',
+    method: 'post',
+    data: {orgId:id}
   })
 }

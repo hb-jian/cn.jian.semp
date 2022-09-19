@@ -74,7 +74,7 @@
               icon="el-icon-plus"
               size="mini"
               @click="handleAdd"
-              v-hasPermi="['energy:device:add']"
+              v-hasPermi="['energy:device:create']"
             >新增</el-button>
           </el-col>
           <el-col :span="1.5">
@@ -132,7 +132,11 @@
           <!-- <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns[2].visible" :show-overflow-tooltip="true" />
           <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns[3].visible" :show-overflow-tooltip="true" />
           <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns[4].visible" width="120" />-->
-          <el-table-column label="所属项目" align="center" prop="proId" v-if="columns[2].visible" />
+          <el-table-column label="所属项目" align="center" prop="projectId" v-if="columns[2].visible" >          
+            <template slot-scope="scope">
+              <span>{{ getProName(scope.row.projectId) }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="运行状态" align="center" key="status" v-if="columns[3].visible">
             <template slot-scope="scope">
               <dict-tag :options="dict.type.e_device_status" :value="scope.row.status" />
@@ -187,7 +191,7 @@
     <!-- 添加或修改设备对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-            <el-form-item label="所属项目" prop="proId">
+            <el-form-item label="所属项目" prop="projectId">
               <treeselect
                 v-model="form.projectId"
                 :options="projectTree"
@@ -202,6 +206,35 @@
             <el-form-item label="设备名称" prop="name">
               <el-input v-model="form.name" placeholder="请输入设备名称" maxlength="30" />
             </el-form-item>
+            <el-form-item label="采集指标">
+              <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleOpcItemSetDialog(null)">设置采集指标</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-table :data="form.dataItems" style="width: 100%; height:250px;">
+                <el-table-column  prop="name" label="名称"  width="100">
+                </el-table-column>
+                <el-table-column  prop="kepIdStr" label="Kep编号"  width="150">
+                </el-table-column>
+                <el-table-column  prop="mergeRule"  label="合并规则"  width="100">
+                </el-table-column>
+                <el-table-column  label="操作"  width="120">
+                  <template slot-scope="scope">
+                    <el-button
+                      size="mini"
+                      type="text"
+                      icon="el-icon-edit"
+                      @click="handleOpcItemSetDialog(scope.row)"                     
+                    >修改</el-button>
+                    <el-button
+                      size="mini"
+                      type="text"
+                      icon="el-icon-delete"
+                      @click="handleOpcItemDel(scope.row)"                      
+                    >删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-form-item>
             <el-form-item label="备注">
               <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
             </el-form-item>
@@ -210,6 +243,41 @@
         <el-button type="primary" @click="submitForm">确 定</el-button>
         <el-button @click="cancel">取 消</el-button>
       </div>
+    </el-dialog>
+
+      <el-dialog title="设置采集指标" :visible.sync="opcAddDialogVisible">
+        <el-form ref="newOpcForm" :model="newOpcItem" :rules="opcItemRules">          
+          <el-form-item label="指标类型" label-width="100px" prop="itemType">
+            <el-select v-model="newOpcItem.itemType" placeholder="请选择指标类型">
+              <el-option
+                  v-for="dict in dict.type.e_device_itemtype"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                ></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="指标名称" label-width="100px" prop="name">
+            <el-input v-model="newOpcItem.name" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="Kep编号" label-width="100px" prop="kepIds">
+            <el-input type="textarea" autosize v-model="newOpcItem.kepIdStr" autocomplete="off" placeholder="请输入采标指标编号，支持多个编号输入，采用逗号进行分隔"></el-input>
+          </el-form-item>
+          <el-form-item label="合并规则" label-width="100px" prop="mergyRule">
+            <el-select v-model="newOpcItem.mergyRule" placeholder="请选择数据合并规则">
+              <el-option
+                  v-for="dict in dict.type.e_device_mergyrule"
+                  :key="dict.value"
+                  :label="dict.label"
+                  :value="dict.value"
+                ></el-option>
+            </el-select>
+          </el-form-item>          
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="handleOpcItemSetDialogCancel()">取 消</el-button>
+          <el-button type="primary" @click="handleOpcItemSet(newOpcItem)">确 定</el-button>
+        </div>
     </el-dialog>
   </div>
 </template>
@@ -231,10 +299,12 @@ import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
   name: "Device",
-  dicts: ["e_device_status"],
+  dicts: ["e_device_status","e_device_itemtype","e_device_mergyrule"],
   components: { Treeselect },
   data() {
     return {
+      //opc添加对话框可见性
+      opcAddDialogVisible: false,
       // 遮罩层
       loading: true,
       // 选中数组
@@ -256,7 +326,9 @@ export default {
       // 弹出层标题
       title: "",
       // 项目数据树
-      projectTree: [],      
+      projectTree: [], 
+      //项目列表 
+      projects:[],    
       // 定时器
       statusTimer: null,
       // 是否显示弹出层
@@ -264,7 +336,16 @@ export default {
       // 日期范围
       dateRange: [],
       // 表单参数
-      form: {},
+      form: {
+        dataItems:[]
+      },
+      //OPC指标项
+      newOpcItem:{
+        name:null,
+        kepIds:null,
+        mergeRule:null,
+        itemType:null
+      },
       defaultProps: {
         children: "children",
         label: "label"
@@ -296,11 +377,28 @@ export default {
         //     trigger: "blur"
         //   }
         // ],
-        proId: [
+        projectId: [
           { required: true, message: "所属项目不能为空", trigger: "blur" }
         ],
         name: [
           { required: true, message: "设备名称不能为空", trigger: "blur" }
+        ],
+        dataItems: [
+          { required: true, message: "采集指标不能为空", trigger: "blur" }
+        ]
+      },
+      opcItemRules: {
+        itemType: [
+          { required: true, message: "采集数据类型不能为空", trigger: "blur" }
+        ],
+        name: [
+          { required: true, message: "采集项目名称不能为空", trigger: "blur" }
+        ],
+        kepIdStr: [
+          { required: true, message: "数据编号不能为空", trigger: "blur" }
+        ],
+        mergyRule: [
+          { required: true, message: "数据合并规则不能为空", trigger: "blur" }
         ]
       }
     };
@@ -312,8 +410,8 @@ export default {
     }
   },
   created() {
-    this.getList();
     this.getTreeselect();
+    this.getList();    
   },
   destroyed() {
     this.stopTimer();
@@ -345,13 +443,12 @@ export default {
     getTreeselect() {
       this.projectTree = [];
       //获取机构列表
-      let orgs,
-        pros = [];
+      let orgs = [];
       listOrg().then(res => {
         orgs = res.rows;
 
         listPro().then(res => {
-          pros = res.rows;
+          this.projects = res.rows;
           //构建项目树
           orgs.forEach(org => {
             let orgNode = {
@@ -361,7 +458,7 @@ export default {
               children: []
             };
 
-            pros.forEach(pro => {
+            this.projects.forEach(pro => {
               if (pro.orgId == org.orgId) {
                 let proNode = {
                   id: pro.id,
@@ -374,13 +471,20 @@ export default {
               }
             });
 
-            if (orgNode.children.length > 0) {
-              console.log(orgNode)
+            if (orgNode.children.length > 0) {              
               this.projectTree.push(orgNode);              
             }
           });
         });
       });
+    },
+    getProName(proId){
+      let name = '';
+      let pro = this.projects.find(pro=>pro.id == proId);
+      if(pro){
+        name = pro.name;
+      }
+      return name;
     },
     // 筛选节点
     filterNode(value, data) {
@@ -408,11 +512,13 @@ export default {
       this.form = {
         devId: undefined,
         devName: undefined,
-        proId: undefined,
-        orgId: undefined,
+        projectId: this.queryParams.proId,
+        orgId: this.queryParams.orgId,
         status: "0",
+        dataItems:[],
         remark: undefined
       };
+      
       this.resetForm("form");
     },
     /** 搜索按钮操作 */
@@ -436,7 +542,7 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加项目";
+      this.title = "添加设备";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {      
@@ -520,7 +626,67 @@ export default {
     /** 停止定时任务 */
     stopTimer() {
       clearInterval(this.statusTimer);
-    }
+    },
+    /** OPC新增对话框 */
+    handleOpcItemSetDialog(opcItem) {       
+      this.opcAddDialogVisible = true;
+      
+      if(opcItem){
+        this.newOpcItem = opcItem
+      }else{
+        this.newOpcItem = {       
+        name:null,
+        kepIdStr:null,
+        kepIds:[],
+        mergyRule:null,
+        itemType:null
+        }      
+      }
+    },
+    /** OPC新增按钮操作 */
+    handleOpcItemSet(opcItem) {
+      this.$refs["newOpcForm"].validate(valid => {
+        if(!valid){
+          return;
+        }        
+        
+        opcItem.kepIds = opcItem.kepIdStr.split('\n')
+        if(!opcItem.id){
+          opcItem.id = Date.now();
+          
+          this.form.dataItems.push(opcItem);
+        } 
+        console.log(opcItem)
+        this.opcAddDialogVisible = false;
+      })
+    },
+    /** OPC新增按钮操作 */
+    handleOpcItemDel(opcItem) {
+      let idx = -1;
+      for(var i=0;i<this.form.opcItems.length;i++){
+        var currentItem = this.form.opcItems[i];
+        if(currentItem.id == opcItem.id){            
+            idx = i;
+            break;
+        }
+      }
+
+      if(idx>-1){
+        this.form.opcItems.splice(idx,1); 
+      }           
+    },
+    /** OPC采集项取消操作 */
+    handleOpcItemSetDialogCancel() {      
+      this.newOpcItem = {       
+        name:null,
+        kepIdStr:null,
+        kepIds:[],
+        mergyRule:null,
+        itemType:null
+        }
+      
+      this.opcAddDialogVisible = false;
+    },
   }
 };
 </script>

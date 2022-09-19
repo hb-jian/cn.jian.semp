@@ -4,8 +4,10 @@ import cn.jian.semp.entity.Device;
 import cn.jian.semp.model.DeviceDto;
 import cn.jian.semp.model.DeviceStatusDto;
 import cn.jian.semp.model.DeviceStatusEnum;
+import cn.jian.semp.model.ProjectDto;
 import cn.jian.semp.repository.DeviceRepository;
 import cn.jian.semp.service.IDeviceService;
+import cn.jian.semp.service.IProjectService;
 import cn.jian.semp.utils.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,8 @@ public class DeviceServiceImpl implements IDeviceService {
 //    private DeviceDataItemRepository deviceDataItemRepository;
     @Autowired
     private RedisUtil redisUtil;
+    @Autowired
+    private IProjectService projectService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private String deviceCacheKey = "all";
@@ -130,8 +134,13 @@ public class DeviceServiceImpl implements IDeviceService {
 
     @Override
     public Device create(DeviceDto data) {
-        Device device = deviceRepository.saveAndFlush(modelToEntity(data));
 
+        ProjectDto projectDto = projectService.get(data.getProjectId());
+        if(projectDto != null){
+            data.setOrgId(projectDto.getOrgId());
+        }
+        Device device = deviceRepository.saveAndFlush(modelToEntity(data));
+        //当数据发生变更后，清除缓存重新加载数据
         redisUtil.delete(RedisUtil.BusinessType.DEVICEDB, deviceCacheKey);
         return device;
     }
@@ -139,14 +148,14 @@ public class DeviceServiceImpl implements IDeviceService {
     @Override
     public void update(DeviceDto data) {
         deviceRepository.saveAndFlush(modelToEntity(data));
-
+        //当数据发生变更后，清除缓存重新加载数据
         redisUtil.delete(RedisUtil.BusinessType.DEVICEDB, deviceCacheKey);
     }
 
     @Override
     public void delete(List<String> ids) {
         deviceRepository.deleteByIdInAndDeletedIsFalse(ids);
-
+        //当数据发生变更后，清除缓存重新加载数据
         redisUtil.delete(RedisUtil.BusinessType.DEVICEDB, deviceCacheKey);
     }
 
@@ -166,6 +175,7 @@ public class DeviceServiceImpl implements IDeviceService {
 
         DeviceDto devDto = new DeviceDto();
         devDto.setId(dev.getId());
+        devDto.setOrgId(dev.getOrgId());
         devDto.setProjectId(dev.getProjectId());
         devDto.setName(dev.getName());
         devDto.setDataItems(dev.getOpcItems());
@@ -178,6 +188,7 @@ public class DeviceServiceImpl implements IDeviceService {
         Device device = new Device();
         device.setName(data.getName());
         //device.setDescription();
+        device.setOrgId(data.getOrgId());
         device.setProjectId(data.getProjectId());
         device.setOpcItems(data.getDataItems());
 

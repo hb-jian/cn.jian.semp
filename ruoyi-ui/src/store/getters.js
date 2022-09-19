@@ -14,5 +14,8 @@ const getters = {
   topbarRouters:state => state.permission.topbarRouters,
   defaultRoutes:state => state.permission.defaultRoutes,
   sidebarRouters:state => state.permission.sidebarRouters,
+  orgId:state => state.user.orgId,
+  isSystem: state => state.user.roles.indexOf("admin")>-1,
+  isEntAdmin: state => state.user.roles.indexOf("entAdmin")>-1
 }
 export default getters

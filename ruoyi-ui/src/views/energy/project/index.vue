@@ -104,7 +104,7 @@
         label="项目名称"
         align="center"
         prop="name"
-        v-if="columns[0].visible"
+        v-if=" columns[0].visible"
       />
       <!-- <el-table-column label="项目编号" align="center" prop="id" />       -->
       <el-table-column
@@ -112,7 +112,7 @@
         align="center"
         prop="orgName"
         sortable
-        v-if="columns[1].visible"
+        v-if="this.$store.getters.isSystem && columns[1].visible"
       />
       <!-- <el-table-column label="状态" align="center" prop="启用">
         <template slot-scope="scope">
@@ -219,7 +219,7 @@
         <el-step title="录入基本信息">-->
 
         <el-form-item label="所属机构" prop="orgId">
-          <el-input v-model="form.orgId" placeholder="请点击此处选择机构" />
+          <treeselect v-model="form.orgId" :options="orgOptions" :normalizer="normalizer" placeholder="请选择机构" />         
         </el-form-item>
         <el-form-item label="项目名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入项目名称" />
@@ -342,17 +342,15 @@
 </template>
 
 <script>
-import {
-  listPro,
-  getPro,
-  delPro,
-  addPro,
-  updatePro
-} from "@/api/energy/project";
+import { listPro,  getPro,  delPro,  addPro,  updatePro} from "@/api/energy/project";
+import { listOrg} from "@/api/system/org";
+import Treeselect from "@riophae/vue-treeselect";
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
   name: "Project",
   dicts: ["sys_normal_disable", "e_energy_type", "e_building_type"],
+  components: { Treeselect },
   data() {
     return {
       // 遮罩层
@@ -367,6 +365,8 @@ export default {
       showSearch: false,
       // 总条数
       total: 0,
+      // 机构选项
+      orgOptions: [],
       // 项目表格数据
       proList: [],
       // 弹出层标题
@@ -430,15 +430,33 @@ export default {
   created() {
     this.getList();
   },
-  methods: {
+  methods: {    
     /** 查询项目列表 */
     getList() {
-      this.loading = true;
+      this.loading = true;  
+
       listPro(this.queryParams).then(response => {
-        this.proList = response.rows;
+        this.proList = response.rows;         
         this.total = response.total;
         this.loading = false;
       });
+
+      listOrg().then(response=>{
+        this.orgOptions = response.rows;
+        this.proList.forEach(element=>{
+          let org = this.orgOptions.find(opt=>opt.orgId == element.orgId);
+          if(org){
+            element.orgName = org.name;
+          }          
+        })      
+      })
+    },
+    /** 转换机构数据结构 */
+    normalizer(node) {          
+      return {
+        id: node.orgId,
+        label: node.name        
+      };
     },
     // 取消按钮
     cancel() {
@@ -486,6 +504,9 @@ export default {
       this.reset();
       this.open = true;
       this.title = "添加项目";
+      listOrg().then(response => {       
+        this.orgOptions = response.rows;//this.handleTree(response.rows, "orgId");
+      });      
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -496,12 +517,15 @@ export default {
         this.open = true;
         this.title = "修改项目";
       });
+      listOrg().then(response => {       
+        this.orgOptions = response.rows;//this.handleTree(response.rows, "orgId");
+      }); 
     },
     /** 提交按钮 */
     submitForm: function() {
-      this.$refs["form"].validate(valid => {
+      this.$refs["form"].validate(valid => {        
         if (valid) {
-          if (this.form.proId != undefined) {
+          if (this.form.id != undefined) {
             updatePro(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
@@ -519,9 +543,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const proIds = row.proId || this.ids;
+      const proIds = row.id || this.ids;
       this.$modal
-        .confirm('是否确认删除项目编号为"' + proIds + '"的数据项？')
+        .confirm('是否确认删除选中的项目？')
         .then(function() {
           return delPro(proIds);
         })

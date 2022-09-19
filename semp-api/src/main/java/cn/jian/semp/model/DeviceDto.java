@@ -18,6 +18,10 @@ public class DeviceDto {
      */
     private String projectId;
     /**
+     * 所属机构
+     */
+    private String orgId;
+    /**
      * 设备名称
      */
     private String name;

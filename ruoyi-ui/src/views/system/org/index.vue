@@ -86,7 +86,7 @@
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template slot-scope="scope">
+        <template slot-scope="scope">          
           <el-button
             size="mini"
             type="text"
@@ -101,6 +101,13 @@
             @click="handleDelete(scope.row)"
             v-hasPermi="['system:org:remove']"
           >删除</el-button>
+          <el-button
+            size="mini"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleLink(scope.row.dataViewUrl)"  
+            v-if="scope.row.dataViewUrl!=null"          
+          >数据大屏</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -115,8 +122,8 @@
 
     <!-- 添加或修改机构对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="机构名称" prop="postName">
+      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="机构名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入机构名称" />
         </el-form-item>
         <el-form-item label="机构状态" prop="status">
@@ -127,6 +134,25 @@
               :label="dict.value"
             >{{dict.label}}</el-radio>
           </el-radio-group>
+        </el-form-item>    
+        <el-form-item label="服务有效期" prop="serviceLife">
+        <el-date-picker  
+         v-model="form.serviceLife"        
+         type="daterange"
+         range-separator="至"
+         start-placeholder="开始日期"
+         end-placeholder="结束日期"
+         value-format="yyyy-MM-dd"
+        ></el-date-picker>
+        </el-form-item>
+        <el-form-item label="管理员账号" prop="account" v-if="form.orgId == null">
+          <el-input v-model="form.account" placeholder="请输入管理员账号" />
+        </el-form-item>
+        <el-form-item label="账号密码" prop="pwd" v-if="form.orgId == null">
+          <el-input v-model="form.pwd" placeholder="请输入账号密码" />
+        </el-form-item>
+        <el-form-item label="数据大屏链接" prop="dataViewUrl">
+          <el-input v-model="form.dataViewUrl" type="textarea" placeholder="请输入数据大屏完整链接地址，例如：https://datav.ali.com/3dr82j82e" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
@@ -174,17 +200,28 @@ export default {
         status: undefined
       },
       // 表单参数
-      form: {},
+      form: {
+        status:1         
+      },
       // 表单校验
       rules: {
         name: [
           { required: true, message: "机构名称不能为空", trigger: "blur" }
-        ]
+        ],
+        account: [
+          { required: true, message: "请设置管理员账号", trigger: "blur" }
+        ],
+        pwd: [
+          { required: true, message: "请设置账号密码", trigger: "blur" }
+        ],
+        serviceLife: [
+          { required: true, message: "请设置服务有效期", trigger: "blur" }
+        ],
       }
     };
   },
   created() {
-    this.getList();
+    this.getList();    
   },
   methods: {
     /** 查询机构列表 */
@@ -207,6 +244,7 @@ export default {
         orgId: undefined,        
         name: undefined,       
         status: "0",
+        dataViewUrl: undefined,
         remark: undefined
       };
       this.resetForm("form");
@@ -232,6 +270,11 @@ export default {
       this.reset();
       this.open = true;
       this.title = "添加机构";
+      let startDate = new Date();
+      let endDate = new Date();
+      endDate.setFullYear(new Date().getFullYear()+1);     
+
+      this.form.serviceLife = [startDate,endDate]
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -239,6 +282,12 @@ export default {
       const orgId = row.orgId || this.ids
       getOrg(orgId).then(response => {
         this.form = response.data;
+        //数据接口类型值为int，需要进行转换
+        this.form.status = response.data.status + '';
+        if(response.data.serviceStartTime && response.data.serviceEndTime){
+          this.form.serviceLife = [response.data.serviceStartTime,response.data.serviceEndTime];
+        }        
+        
         this.open = true;
         this.title = "修改机构";
       });
@@ -247,6 +296,13 @@ export default {
     submitForm: function() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if(this.form.serviceLife){
+              this.form.serviceStartTime = this.form.serviceLife[0];
+              this.form.serviceEndTime = this.form.serviceLife[1];
+
+              this.form.serviceLife = null;
+          }          
+          
           if (this.form.orgId != undefined) {
             updateOrg(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
@@ -278,6 +334,10 @@ export default {
       this.download('system/org/export', {
         ...this.queryParams
       }, `org_${new Date().getTime()}.xlsx`)
+    },
+    /** 数据大屏操作 */
+    handleLink(url) {
+      window.open(url,"_blank");
     }
   }
 };

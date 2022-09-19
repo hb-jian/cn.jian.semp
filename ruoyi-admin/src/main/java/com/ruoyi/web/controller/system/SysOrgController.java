@@ -58,6 +58,19 @@ public class SysOrgController extends BaseController {
     }
 
     /**
+     * 删除
+     * @param
+     * @return
+     */
+    @Operation(summary = "删除")
+    @PostMapping("/delete")
+    public AjaxResult delete(@RequestBody SysOrg sysOrg){
+        //TODO:删除机构需要清理对应的资源（部门、管理员、用户以及业务数据）
+        orgService.delete(sysOrg.getOrgId());
+        return AjaxResult.success();
+    }
+
+    /**
      * 详情
      * @param id
      * @return
